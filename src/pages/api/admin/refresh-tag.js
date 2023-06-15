@@ -4,6 +4,7 @@ import { getUserByUsername, userIsAdmin } from '@/lib/utils/databaseUtils';
 import { makeBanner } from '@/lib/riitag/banner';
 import logger from '@/lib/logger';
 import { ncWithSession } from '@/lib/routing';
+import { renderTag } from '@/lib/riitag/neo/renderer';
 
 async function refreshTag(request, response) {
   const { username } = request.body;
@@ -36,7 +37,7 @@ async function refreshTag(request, response) {
   }
 
   try {
-    await makeBanner(user);
+    await renderTag(user);
   } catch (error) {
     logger.error(error);
     return response.status(HTTP_CODE.INTERNAL_SERVER_ERROR).json({

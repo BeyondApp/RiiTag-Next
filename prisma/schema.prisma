@@ -72,6 +72,7 @@ model user {
   flag           String    @default("rc24") @db.VarChar(20)
   coin           String    @default("mario") @db.VarChar(20)
   font           String    @default("default") @db.VarChar(50)
+  badge          String?   @db.VarChar(50)
   show_avatar    Boolean   @default(false)
   show_mii       Boolean   @default(false)
   mii_type       String    @default("guest") @db.VarChar(10)

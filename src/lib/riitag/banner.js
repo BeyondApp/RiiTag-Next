@@ -275,7 +275,7 @@ export async function makeBanner(user) {
     overlay.coin_count.font_size,
     overlay.coin_count.font_style,
     overlay.coin_count.font_color,
-    user.coins > 9_999_999 ? 9_999_999 : user.coins, // Lars cheated again
+    user.coins > overlay.coin_count.max ? overlay.coin_count.max : user.coins, // Lars cheated again (I fixed it Larsen :/)
     overlay.coin_count.x,
     overlay.coin_count.y
   );

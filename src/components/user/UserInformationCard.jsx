@@ -2,6 +2,7 @@ import { Button, Card } from 'react-bootstrap';
 import PropTypes from 'prop-types';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
+  faGear,
   faPen,
   faQuestionCircle,
   faWifi,
@@ -16,7 +17,7 @@ import { FONTS } from '@/lib/constants/forms/fonts';
 import { COVER_REGIONS } from '@/lib/constants/forms/coverRegions';
 import { COVER_TYPES } from '@/lib/constants/forms/coverTypes';
 
-function UserInformationCard({ user, isLoggedIn }) {
+function UserInformationCard({ user, isLoggedIn, isAdmin }) {
   return (
     <Card className="mb-3" bg="secondary" text="white">
       <Card.Header as="h5">User Information</Card.Header>
@@ -90,6 +91,15 @@ function UserInformationCard({ user, isLoggedIn }) {
                 </Button>
               </Link>
             </div>
+            {isAdmin && (
+              <div className='mt-3'>
+                <Link href={`/user/${user.username}/admin`} passHref>
+                  <Button variant="danger">
+                    <FontAwesomeIcon className="me-1" icon={faGear} /> Admin
+                  </Button>
+                </Link>
+              </div>
+            )}
           </div>
         )}
       </Card.Body>
