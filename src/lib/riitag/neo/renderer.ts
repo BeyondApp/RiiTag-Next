@@ -37,26 +37,23 @@ export async function renderTag(user) {
     const canvas = new Canvas.Canvas(overlay.width, overlay.height);
     var context = canvas.getContext('2d');
 
-    const renderEmitter = new EventEmitter();
     var finished = 0;
 
-    for (const element of overlay.draw_order) {
-        var moduleName = await import(`@/lib/riitag/neo/std/${element}`);
-        var module: ModuleBase = new moduleName.default(overlay);
+    const elements: ModuleBase[] = await Promise.all(overlay.draw_order.map(async (element) => {
+      var moduleName = await import(`@/lib/riitag/neo/std/${element}`);
+      var module: ModuleBase = new moduleName.default(overlay);
+      logger.info(`Building render element: ${element}; for ${user.username}`);
+      // that's a grammatical nightmare dipshit
+      // why are you restarting it?
 
-        renderEmitter.once("ready", () => { module.render(context, user); });
+      return module;
+    }));
 
-        module.events.once("rendered", async () => {
-            logger.info(`Finished rendering ${element} for ${user.username}`);
-            finished++;
-            logger.info(`Finished: ${finished}/${overlay.draw_order.length}`);
-            renderEmitter.emit("ready");
-            if (finished == overlay.draw_order.length) {
-                logger.info(`Finished rendering ${user.username}`);
-                await saveFile(path.resolve(CACHE.TAGS, `neo.${user.username}.max.png`), canvas.createPNGStream());
-            }
-        });
-
-        renderEmitter.emit("ready");
+    for (const element of elements) {
+      await element.render(context, user);
+      finished++;
+      logger.info(`Finished: ${finished}/${overlay.draw_order.length}`);
     }
+
+    await saveFile(path.resolve(CACHE.TAGS, `neo.${user.username}.max.png`), canvas.createPNGStream());
 }

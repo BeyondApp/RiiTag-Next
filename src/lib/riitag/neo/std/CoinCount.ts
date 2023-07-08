@@ -30,8 +30,9 @@ export default class CoinCount extends ModuleBase {
     }
 
     render(ctx: Canvas.CanvasRenderingContext2D, user) {
-        if (user.font != "default" && this.font.force == false) this.font.name = user.font;
+        if (user.font != "default" && this.font.force == false) 
+            this.font.name = user.font;
+
         drawText(ctx, this.font, user.coins > this.max ? this.max : user.coins, this.x, this.y, this.align);
-        this.events.emit("rendered");
     }
 }

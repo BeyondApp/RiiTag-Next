@@ -46,24 +46,20 @@ export default class Avatar extends ModuleBase {
         return Canvas.loadImage(filepath);
     }
 
-    render(ctx: Canvas.CanvasRenderingContext2D, user): any {
+    async render(ctx: Canvas.CanvasRenderingContext2D, user) {
         logger.info(`Rendering avatar for ${user.username}`);
         if (user.show_avatar && this.enabled) {
-            this.getAvatar(user.username, user.image).then((avatar) => {
-                if (this.background) {
-                    Canvas.loadImage(path.resolve(PUBLIC.OVERLAY_IMAGE, this.background.img)).then((background) => {
-                        logger.info("Background loaded");
-                        ctx.drawImage(background, this.background.x, this.background.y, this.background.width, this.background.height);
-                        ctx.drawImage(avatar, this.x, this.y, this.size, this.size);
-                        logger.info("Avatar finished rendering");
-                        this.events.emit("rendered");
-                    });
-                } else {
-                    logger.info("No background");
-                    ctx.drawImage(avatar, this.x, this.y, this.size, this.size);
-                    this.events.emit("rendered");
-                }
-            });
+            const avatar = await this.getAvatar(user.username, user.image)
+            if (this.background) {
+                const background = await Canvas.loadImage(path.resolve(PUBLIC.OVERLAY_IMAGE, this.background.img))
+                logger.info("Background loaded");
+                ctx.drawImage(background, this.background.x, this.background.y, this.background.width, this.background.height);
+                ctx.drawImage(avatar, this.x, this.y, this.size, this.size);
+                logger.info("Avatar finished rendering");
+            } else {
+                logger.info("No background");
+                ctx.drawImage(avatar, this.x, this.y, this.size, this.size);
+            }
         }
     }
 }

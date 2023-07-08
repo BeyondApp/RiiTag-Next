@@ -37,10 +37,10 @@ export default class Covers extends ModuleBase {
             regions = game.region[0].split(',').map(region => region.trim());
           }
         });
-        return regions;
+        return regions; // Ex. NA,EU,JA
       }
 
-    get3DSGameRegion(gameId) {
+    getBoxGameRegion(gameId) {
         switch (gameId.charAt(3)) {
             case 'P': {
               return 'EN';
@@ -60,29 +60,6 @@ export default class Covers extends ModuleBase {
             default: {
               return 'EN';
             }
-        }
-    }
-
-    getWiiGameRegion(gameId) {
-        switch (gameId.charAt(3)) {
-          case 'P': {
-            return 'EN';
-          }
-          case 'E': {
-            return 'US';
-          }
-          case 'J': {
-            return 'JA';
-          }
-          case 'K': {
-            return 'KO';
-          }
-          case 'W': {
-            return 'TW';
-          }
-          default: {
-            return 'EN';
-          }
         }
     }
 
@@ -108,46 +85,15 @@ export default class Covers extends ModuleBase {
           });
       
           const games = result.datafile.game;
-      
           const region = this.findRegionByGameId(gameId, games);
-      
+          
           for (const gameRegion of region) {
-            // Europe
-            if (gameRegion === "FRA") {
-              return "FR";
-            }
-            if (gameRegion === "DEU") {
-              return "DE";
-            }
-            if (gameRegion === "ESP") {
-              return "ES";
-            }
-            if (gameRegion === "AUS") {
-              return "AU";
-            }
-            if (gameRegion === "EUR") {
+            // Slight exceptions for some god damn reason
+            if (gameRegion === "EUR" || gameRegion === "ALL") {
               return "EN";
             }
-            if (gameRegion === "KOR") {
-              return "KO";
-            }
-            if (gameRegion === "TWN") {
-              return "TW";
-            }
-      
-            // Japan
-            if (gameRegion === "JPN") {
-              return "JP";
-            }
-      
-            // USA
-            if (gameRegion === "USA") {
-              return "US";
-            }
-      
-            if (gameRegion === "ALL") {
-              return "EN";
-            }
+
+            return gameRegion.slice(0, 2);
           }
       
           return null; // Game ID not found
@@ -159,13 +105,12 @@ export default class Covers extends ModuleBase {
 
     async getGameRegion(console, gameId) {
         switch(console) {
-            case CONSOLE.THREEDS:
-                return this.get3DSGameRegion(gameId);
-            case CONSOLE.SWITCH:
-                return await this.getSwitchGameRegion(gameId);
             case CONSOLE.WII:
             case CONSOLE.WII_U:
-                return this.getWiiGameRegion(gameId);
+            case CONSOLE.THREEDS:
+                return this.getBoxGameRegion(gameId);
+            case CONSOLE.SWITCH:
+                return await this.getSwitchGameRegion(gameId);
             default:
                 throw new Error(`Unknown console ${console}`);
         }
@@ -175,35 +120,23 @@ export default class Covers extends ModuleBase {
         return `https://art.gametdb.com/${console}/${type}/${region}/${gameId}.${extention}`;
     }
 
-    
-
     async downloadCover(console, type, gameId, region) {
-        const filepath = path.resolve(
-            CACHE.COVER,
-            console,
-            type,
-            region,
-            `${gameId}.${this.getExtension(type, console)}`
-        )
+        // Determine if a cache already exists, if so, return it.
+        const filepath = path.resolve(CACHE.COVER, console, type, region, `${gameId}.${this.getExtension(type, console)}`);
+        if (fs.existsSync(filepath)) return filepath;
 
-        if (fs.existsSync(filepath)) {
-            return filepath;
-        }
+        // Fetch the the cover directly from the coverDB.
+        const response = await fetch(this.getCoverURL(console, type, region, gameId, this.getExtension(type, console)));
+        if (!response.ok) throw new Error(`Failed to download cover for ${gameId}`);
 
-        const url = this.getCoverURL(console, type, region, gameId, this.getExtension(type, console));
-        const response = await fetch(url);
-        if (!response.ok) {
-            throw new Error(`Failed to download cover for ${gameId}`);
-        }
-
+        // Save to a cache and return it.
         await saveFile(filepath, await response.body);
         return filepath;
     }
 
+    // Wii uses the JPG format for covers so make sure to have an exception for that.
     getExtension(coverType, gameConsole) {
-        if (gameConsole !== CONSOLE.WII && coverType === COVER_TYPE.COVER) {
-            return 'jpg';
-        }
+        if (gameConsole !== CONSOLE.WII && coverType === COVER_TYPE.COVER) return 'jpg';
         return 'png';
     }
 
@@ -237,24 +170,24 @@ export default class Covers extends ModuleBase {
                     return this.downloadCover(console, type, gameId, 'US');
                 }
             }
-        } else {
-            try {
-                return await this.downloadCover(console, type, gameId, gameRegion);
-            } catch {
-                try {
-                    return await this.downloadCover(console, type, gameId, this.getGameRegion(console, gameId));
-                } catch {
-                    try {
-                        return await this.downloadCover(console, type, gameId, 'EN');
-                    } catch {
-                        return this.downloadCover(console, type, gameId, 'US');
-                    }
-                }
-            }
         }
+
+        try {
+          return await this.downloadCover(console, type, gameId, gameRegion);
+        } catch {
+          try {
+            return await this.downloadCover(console, type, gameId, this.getGameRegion(console, gameId));
+          } catch {
+            try {
+              return await this.downloadCover(console, type, gameId, 'EN');
+            } catch {
+              return this.downloadCover(console, type, gameId, 'US');
+          }
+        }
+      }
     }
 
-    async getCovers(user) {
+    async getCovers(user): Promise<string[]> {
         const coverType = user.cover_type;
         const playlog = await prisma.playlog.findMany({
             where: {
@@ -297,6 +230,7 @@ export default class Covers extends ModuleBase {
 
             const coverPaths = [];
 
+
             for (const logEntry of playlog) {
                 const coverPath = await this.getCover(
                     logEntry.game.console,
@@ -304,81 +238,73 @@ export default class Covers extends ModuleBase {
                     logEntry.game.game_id,
                     user.cover_region
                 );
-                if (coverPath) {
-                    coverPaths.push(coverPath);
-                }
+
+                if (!coverPath) continue;
+                coverPaths.push(coverPath);
             }
 
             return coverPaths;
         }
     }
 
-    render(ctx: Canvas.CanvasRenderingContext2D, user) {
-        var covCurrentX = this.x;
-        var covCurrentY = this.y;
+    async render(ctx: Canvas.CanvasRenderingContext2D, user) {
+      this.renderCovers(await this.getCovers(user), ctx)
+    };
 
-        this.getCovers(user).then((coverPaths) => {
-            coverPaths.reduce((promise, coverPath) => {
-                var inc = 0;
+    renderCovers (coverPaths: string[], ctx: Canvas.CanvasRenderingContext2D) {
+      var obj = this;
+      
+      // Load the final cover with the y-offset applied
+      // Y-offset is arbitrarily defined based on relative scale of box/cover.
+      function loadFinalCover (xOffset: number, yOffset: number, coverPath: string, width: number, height: number) {
+        Canvas.loadImage(coverPath).then((image) => {
+          ctx.drawImage(image, obj.x + xOffset, (obj.y + yOffset))
+        });
+      }
 
-                promise.then(() => {
-                    const coverPathSegments = coverPath.split(path.sep);
-                    const coverType = coverPathSegments[coverPathSegments.length - 4];
+      let currentY: number = 0;
+      let currentX: number = 0;
+      let yOffset: number = 0;
 
-                    if (coverType === CONSOLE.THREEDS) {
-                        if (coverType === COVER_TYPE.COVER_3D) {
-                          inc = 15;
-                        } else if (coverType === COVER_TYPE.COVER) {
-                          inc = 80;
-                        }
-                      }
+      coverPaths.forEach((coverPath) => {
+        const coverPathSegments = coverPath.split(path.sep);
+        const coverType = coverPathSegments[coverPathSegments.length - 4];
+        console.log(coverPathSegments);
+
+        let gameConsole;
+
+        switch (gameConsole) {
+          case CONSOLE.THREEDS: // 3DS has tiny boxes and requires special conditions
+
+            // Add specific Y offsets to Cover_3d to allow it to render inline with the other covers despite being different sizes.
+            if (coverType === COVER_TYPE.COVER_3D)
+              yOffset = 15;
+            else if (coverType === COVER_TYPE.COVER)
+              yOffset = 80;
+
+            switch (coverType) {
+              case COVER_TYPE.DISC:
+                loadFinalCover(currentX, currentY + yOffset, coverPath, 160, 160);
+              case COVER_TYPE.COVER_3D:
+                loadFinalCover(currentX, currentY + yOffset, coverPath, 142, 230);
+            }
                 
-                      if (coverType === CONSOLE.THREEDS && coverType === COVER_TYPE.DISC) {
-                        Canvas.loadImage(coverPath).then((image) => {
-                            ctx.drawImage(
-                                image,
-                                covCurrentX,
-                                covCurrentY + inc,
-                                160,
-                                160
-                              )
-                        });
-                      } else if (coverType === CONSOLE.SWITCH && coverType === COVER_TYPE.COVER_3D) {
-                        Canvas.loadImage(coverPath).then((image) => {
-                            ctx.drawImage(
-                                image,
-                                covCurrentX,
-                                covCurrentY + inc,
-                                142,
-                                230
-                              )
-                        });
-                      } else if (coverType === CONSOLE.SWITCH && coverType === COVER_TYPE.DISC) {
-                        Canvas.loadImage(coverPath).then((image) => {
-                            ctx.drawImage(
-                                image,
-                                covCurrentX,
-                                covCurrentY + inc,
-                                107,
-                                160
-                              )
-                        });
-                      } else {
-                        Canvas.loadImage(coverPath).then((image) => {
-                            ctx.drawImage(
-                                image,
-                                covCurrentX,
-                                covCurrentY + inc
-                              )
-                        });
-                      }
+            break;
+
+            default:
+            case CONSOLE.SWITCH:
                 
-                      covCurrentX += this.increment_x;
-                      covCurrentY += this.increment_y;
-                    }, Promise.resolve());
-                  }
-                );
-            });
-            this.events.emit('rendered');
-        };
+            switch (coverType) {
+              default:
+              case COVER_TYPE.DISC:
+                loadFinalCover(currentX, currentY + yOffset, coverPath, 107, 160);
+              }
+
+            break;
+        }
+
+        currentX += this.increment_x;
+        currentY += this.increment_y;
+      });
     }
+}

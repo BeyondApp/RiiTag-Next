@@ -23,13 +23,11 @@ export default class Flag extends ModuleBase {
 
         if (!fs.existsSync(filepath)) {
             logger.error(`Flag ${user.flag} not found`);
-            this.events.emit("rendered");
             return;
         }
 
         Canvas.loadImage(filepath).then((flag) => {
             ctx.drawImage(flag, this.x, this.y, 72, 72);
-            this.events.emit("rendered");
         });
     }
 }
