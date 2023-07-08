@@ -9,7 +9,7 @@ import { saveFile } from '@/lib/utils/fileUtils';
 import { CACHE } from '@/lib/constants/filePaths';
 import prisma from '@/lib/db';
 import { MII_TYPE } from '@/lib/constants/miiType';
-import { makeBanner } from '@/lib/riitag/banner';
+import { renderTag } from '@/lib/riitag/neo/renderer';
 import logger from '@/lib/logger';
 
 async function uploadMii(request, response) {
@@ -111,7 +111,7 @@ async function uploadMii(request, response) {
   }
 
   if (user.show_mii === true) {
-    makeBanner(user);
+    renderTag(user);
   }
 
   return response.status(HTTP_CODE.OK).send();

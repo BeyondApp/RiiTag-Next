@@ -3,7 +3,7 @@ import { ncWithSession } from "@/lib/routing";
 import { userIsAdmin } from "@/lib/utils/databaseUtils";
 import { isBlank } from "@/lib/utils/utils";
 
-const { makeBanner } = require("@/lib/riitag/banner");
+const { renderTag } = require("@/lib/riitag/banner");
 
 async function updateBadge(request, response) {
     const loggedInUser = request.session?.username;
@@ -41,7 +41,7 @@ async function updateBadge(request, response) {
                 badge,
             },
         });
-        // await makeBanner(user);
+        // await renderTag(user);
     } catch (error) {
         logger.error(error);
         return response

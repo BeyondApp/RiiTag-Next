@@ -13,7 +13,7 @@ import {
 } from '@/lib/utils/riitagUtils';
 import { DATA } from '@/lib/constants/filePaths';
 import CONSOLE from '@/lib/constants/console';
-import { makeBanner } from '@/lib/riitag/banner';
+import { renderTag } from '@/lib/riitag/neo/renderer';
 import logger from '@/lib/logger';
 import { getUserByRandKey } from '@/lib/utils/databaseUtils';
 
@@ -94,7 +94,7 @@ async function addWiiUGame(request, response) {
 
   try {
     const updatedUser = await updateRiiTag(user, id6, gameName, gameConsole);
-    makeBanner(updatedUser);
+    renderTag(updatedUser);
   } catch (error) {
     logger.error(error);
     return response

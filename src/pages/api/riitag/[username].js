@@ -5,7 +5,7 @@ import { nc } from '@/lib/routing';
 import prisma from '@/lib/db';
 import { CACHE } from '@/lib/constants/filePaths';
 import { exists } from '@/lib/utils/fileUtils';
-import { makeBanner } from '@/lib/riitag/banner';
+import { renderTag } from '@/lib/riitag/neo/renderer';
 import logger from '@/lib/logger';
 import { setFileHeaders } from '@/lib/utils/utils';
 
@@ -32,7 +32,7 @@ async function getRiitag(request, response) {
 
   if (!(await exists(filepath))) {
     try {
-      await makeBanner(user);
+      await renderTag(user);
     } catch (error) {
       logger.error(error);
       response.setHeader('Content-Type', 'image/png');

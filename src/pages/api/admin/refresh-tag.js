@@ -1,7 +1,6 @@
 import HTTP_CODE from '@/lib/constants/httpStatusCodes';
 import { isBlank } from '@/lib/utils/utils';
 import { getUserByUsername, userIsAdmin } from '@/lib/utils/databaseUtils';
-import { makeBanner } from '@/lib/riitag/banner';
 import logger from '@/lib/logger';
 import { ncWithSession } from '@/lib/routing';
 import { renderTag } from '@/lib/riitag/neo/renderer';

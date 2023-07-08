@@ -2,7 +2,7 @@ import { ncWithSession } from '@/lib/routing';
 import HTTP_CODE from '@/lib/constants/httpStatusCodes';
 import { isBlank } from '@/lib/utils/utils';
 import prisma from '@/lib/db';
-import { makeBanner } from '@/lib/riitag/banner';
+import { renderTag } from '@/lib/riitag/neo/renderer';
 import { isValidMiiType, MII_TYPE } from '@/lib/constants/miiType';
 import { isValidGuestMii } from '@/lib/constants/forms/guestMiis';
 import logger from '@/lib/logger';
@@ -79,7 +79,7 @@ async function updateMii(request, response) {
   }
 
   if (user.show_mii === true) {
-    makeBanner(user);
+    renderTag(user);
   }
 
   return response.status(HTTP_CODE.OK).send();

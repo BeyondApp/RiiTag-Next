@@ -6,7 +6,7 @@ import { isBlank } from '@/lib/utils/utils';
 import { getWiiGameName, updateRiiTag } from '@/lib/utils/riitagUtils';
 import CONSOLE from '@/lib/constants/console';
 import logger from '@/lib/logger';
-import { makeBanner } from '@/lib/riitag/banner';
+import { renderTag } from '@/lib/riitag/neo/renderer';
 import { getUserByRandKey } from '@/lib/utils/databaseUtils';
 
 const limiter = rateLimit({
@@ -47,7 +47,7 @@ async function addWiiGame(request, response) {
 
   try {
     const updatedUser = await updateRiiTag(user, game, gameName, CONSOLE.WII);
-    makeBanner(updatedUser);
+    renderTag(updatedUser);
   } catch (error) {
     logger.error(error);
     return response

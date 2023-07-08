@@ -10,7 +10,7 @@ import { isValidCoin } from '@/lib/constants/forms/coins';
 import { isValidFont } from '@/lib/constants/forms/fonts';
 import logger from '@/lib/logger';
 import prisma from '@/lib/db';
-import { makeBanner } from '@/lib/riitag/banner';
+import { renderTag } from '@/lib/riitag/neo/renderer';
 
 async function updateTagSettings(request, response) {
   const {
@@ -79,7 +79,7 @@ async function updateTagSettings(request, response) {
         show_mii: showMii,
       },
     });
-    await makeBanner(user);
+    await renderTag(user);
   } catch (error) {
     logger.error(error);
     return response

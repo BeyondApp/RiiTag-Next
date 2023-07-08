@@ -1,10 +1,11 @@
 import HTTP_CODE from '@/lib/constants/httpStatusCodes';
-import { makeBanner } from '@/lib/riitag/banner';
+// import { renderTag } from '@/lib/riitag/neo/renderer';
 import logger from '@/lib/logger';
 import prisma from '@/lib/db';
 import { ncWithSession } from '@/lib/routing';
 import rateLimit from '@/lib/rate-limit';
 import ENV from '@/lib/constants/environmentVariables';
+import { renderTag } from '@/lib/riitag/neo/renderer';
 
 const limiter = rateLimit({
   interval: ENV.IS_DEV ? 1 : 30_000, // 30 Seconds
@@ -35,7 +36,7 @@ async function refreshTag(request, response) {
   }
 
   try {
-    await makeBanner(user);
+    await renderTag(user);
   } catch (error) {
     logger.error(error);
     return response.status(HTTP_CODE.INTERNAL_SERVER_ERROR).json({
