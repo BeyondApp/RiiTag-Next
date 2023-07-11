@@ -55,5 +55,5 @@ export async function renderTag(user) {
       logger.info(`Finished: ${finished}/${overlay.draw_order.length}`);
     }
 
-    await saveFile(path.resolve(CACHE.TAGS, `neo.${user.username}.max.png`), canvas.createPNGStream());
+    await saveFile(path.resolve(CACHE.TAGS, `${user.username}.max.png`), canvas.createPNGStream());
 }

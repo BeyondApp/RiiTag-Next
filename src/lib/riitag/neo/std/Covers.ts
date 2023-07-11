@@ -1,5 +1,4 @@
 import prisma from '@/lib/db';
-import ModuleBase from '../ModuleBase';
 import CONSOLE from '@/lib/constants/console';
 import { CACHE, DATA } from '@/lib/constants/filePaths';
 import path from 'node:path';
@@ -7,15 +6,23 @@ import COVER_TYPE from '@/lib/constants/coverType';
 import fs from 'node:fs';
 import { saveFile } from '@/lib/utils/fileUtils';
 import Canvas from 'canvas';
+import ModuleBase from '../ModuleBase';
+
 const xml2js = require('xml2js');
 
 export default class Covers extends ModuleBase {
     x: number;
+
     y: number;
+
     width: number;
+
     height: number;
+
     increment_x: number;
+
     increment_y: number;
+
     max: number;
 
     constructor(overlay) {
@@ -71,13 +78,13 @@ export default class Covers extends ModuleBase {
         try {
           const data = await fs.promises.readFile(
             path.resolve(DATA.IDS, 'switchtdb.xml'),
-            'utf-8'
+            'utf8'
           );
       
           const result: any = await new Promise((resolve, reject) => {
-            xml2js.parseString(data, (parseErr, parseResult) => {
-              if (parseErr) {
-                reject(parseErr);
+            xml2js.parseString(data, (parseError, parseResult) => {
+              if (parseError) {
+                reject(parseError);
               } else {
                 resolve(parseResult);
               }
@@ -107,12 +114,15 @@ export default class Covers extends ModuleBase {
         switch(console) {
             case CONSOLE.WII:
             case CONSOLE.WII_U:
-            case CONSOLE.THREEDS:
+            case CONSOLE.THREEDS: {
                 return this.getBoxGameRegion(gameId);
-            case CONSOLE.SWITCH:
+            }
+            case CONSOLE.SWITCH: {
                 return await this.getSwitchGameRegion(gameId);
-            default:
+            }
+            default: {
                 throw new Error(`Unknown console ${console}`);
+            }
         }
     }
 
@@ -143,19 +153,24 @@ export default class Covers extends ModuleBase {
     async getCover(console, type, gameId, region) {
         switch(console) {
             case CONSOLE.THREEDS:
-            case CONSOLE.SWITCH:
+            case CONSOLE.SWITCH: {
                 switch(type) {
-                    case COVER_TYPE.COVER_3D:
+                    case COVER_TYPE.COVER_3D: {
                         type = COVER_TYPE.BOX;
                         break;
-                    case COVER_TYPE.DISC:
+                    }
+                    case COVER_TYPE.DISC: {
                         type = COVER_TYPE.CART;
                         break;
-                    default:
+                    }
+                    default: {
                         break;
+                    }
             }
-            default:
+            }
+            default: {
                 break;
+            }
         }
 
         const gameRegion = await this.getGameRegion(console, gameId);
@@ -245,20 +260,22 @@ export default class Covers extends ModuleBase {
 
             return coverPaths;
         }
+
+        return [];
     }
 
-    async render(ctx: Canvas.CanvasRenderingContext2D, user) {
-      this.renderCovers(await this.getCovers(user), ctx)
+    async render(context: Canvas.CanvasRenderingContext2D, user) {
+      this.renderCovers(await this.getCovers(user), context)
     };
 
-    renderCovers (coverPaths: string[], ctx: Canvas.CanvasRenderingContext2D) {
-      var obj = this;
+    renderCovers (coverPaths: string[], context: Canvas.CanvasRenderingContext2D) {
+      const object = this;
       
       // Load the final cover with the y-offset applied
       // Y-offset is arbitrarily defined based on relative scale of box/cover.
       function loadFinalCover (xOffset: number, yOffset: number, coverPath: string, width: number, height: number) {
         Canvas.loadImage(coverPath).then((image) => {
-          ctx.drawImage(image, obj.x + xOffset, (obj.y + yOffset))
+          context.drawImage(image, object.x + xOffset, (object.y + yOffset))
         });
       }
 
@@ -274,7 +291,7 @@ export default class Covers extends ModuleBase {
         let gameConsole;
 
         switch (gameConsole) {
-          case CONSOLE.THREEDS: // 3DS has tiny boxes and requires special conditions
+          case CONSOLE.THREEDS: { // 3DS has tiny boxes and requires special conditions
 
             // Add specific Y offsets to Cover_3d to allow it to render inline with the other covers despite being different sizes.
             if (coverType === COVER_TYPE.COVER_3D)
@@ -283,24 +300,35 @@ export default class Covers extends ModuleBase {
               yOffset = 80;
 
             switch (coverType) {
-              case COVER_TYPE.DISC:
+              case COVER_TYPE.DISC: {
                 loadFinalCover(currentX, currentY + yOffset, coverPath, 160, 160);
-              case COVER_TYPE.COVER_3D:
+              break
+              }
+              case COVER_TYPE.COVER_3D: {
                 loadFinalCover(currentX, currentY + yOffset, coverPath, 142, 230);
+              break
+              }
+              
+              default: {
+                break
+              }
             }
                 
             break;
+          }
 
-            default:
-            case CONSOLE.SWITCH:
+          default:
+          case CONSOLE.SWITCH: {
                 
-            switch (coverType) {
-              default:
-              case COVER_TYPE.DISC:
-                loadFinalCover(currentX, currentY + yOffset, coverPath, 107, 160);
-              }
+          switch (coverType) {
+            default:
+            case COVER_TYPE.DISC: {
+              loadFinalCover(currentX, currentY + yOffset, coverPath, 107, 160);
+            }
+            }
 
-            break;
+          break;
+          }
         }
 
         currentX += this.increment_x;

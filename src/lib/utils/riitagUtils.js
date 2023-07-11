@@ -306,6 +306,17 @@ export async function getWiiUGameIdByNameAndRegion(gameName, region) {
 export async function updateRiiTag(user, gameId, gameName, gameConsole) {
   gameId = gameId.toUpperCase();
 
+  const [value] = await prisma.events.findFirst({
+    where: {
+      start_time: {
+        lte: new Date(),
+      },
+      end_time: {
+        gte: new Date(),
+      }
+    }
+  })
+
   const [, updatedUser] = await prisma.$transaction([
     prisma.game.upsert({
       where: {
@@ -342,10 +353,11 @@ export async function updateRiiTag(user, gameId, gameName, gameConsole) {
       },
       data: {
         coins: {
-          increment: 1,
+          increment: value.bonus_coins,
         },
       },
     }),
   ]);
+  
   return updatedUser;
 }

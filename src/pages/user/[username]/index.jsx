@@ -1,4 +1,4 @@
-import { Col, Container, Row } from 'react-bootstrap';
+import { Alert, Col, Container, Row } from 'react-bootstrap';
 import safeJsonStringify from 'safe-json-stringify';
 import PropTypes from 'prop-types';
 import { NextSeo } from 'next-seo';
@@ -34,6 +34,17 @@ export const getServerSideProps = withSession(async ({ req, query }) => {
     },
   });
 
+  const event = await prisma.events.findFirst({
+    where: {
+      start_time: {
+        lte: new Date(),
+      },
+      end_time: {
+        gte: new Date(),
+      }
+    }
+  });
+
   const loggedInUser = await prisma.user.findUnique({
     where: {
       username: loggedInUsername,
@@ -51,12 +62,17 @@ export const getServerSideProps = withSession(async ({ req, query }) => {
     props: {
       user: JSON.parse(safeJsonStringify(user)),
       isLoggedIn: user.username === loggedInUsername,
-      loggedInUser
+      loggedInUser,
+      event: {
+        name: event.name,
+        date: `${event.end_time.getMonth() + 1}/${event.end_time.getDate()}/${event.end_time.getFullYear()}`,
+        bonus: event.bonus_coins,
+      }
     },
   };
 });
 
-function ProfilePage({ user, isLoggedIn, loggedInUser }) {
+function ProfilePage({ user, isLoggedIn, loggedInUser, event }) {
   return (
     <Container>
       <NextSeo
@@ -94,6 +110,7 @@ function ProfilePage({ user, isLoggedIn, loggedInUser }) {
         </Col>
 
         <Col lg={5}>
+          <Alert variant="info">An event is currently ongoing: {event.name}.<br />Until {event.date}, you will recieve {event.bonus + 1}x more coins.</Alert>
           <UserInformationCard user={user} isLoggedIn={isLoggedIn} isAdmin={loggedInUser.role == "admin"} />
         </Col>
       </Row>
